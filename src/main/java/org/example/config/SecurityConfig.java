@@ -19,18 +19,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Allow public access to the root, index.html, and our auth API
                         .requestMatchers("/", "/index.html", "/api/auth/**").permitAll()
-                        // Any other request requires authentication
-                        .anyRequest().authenticated()
+
+                        // Allow any authenticated user to access the trains and bookings APIs
+                        .requestMatchers("/api/trains/**", "/api/bookings/**").authenticated()
+
+                        // For any other request, deny all
+                        .anyRequest().denyAll()
                 );
 
         return http.build();
     }
 
-    /**
-     * Provides a PasswordEncoder bean for the application.
-     * This is used to securely hash and verify passwords.
-     * @return A BCryptPasswordEncoder instance.
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -272,6 +272,9 @@
         appContainer.classList.add('hidden');
         loginForm.reset();
         registerForm.reset();
+        // We don't need a backend call for logout in this simple session-based setup.
+        // Clearing the state and showing the login page is enough.
+        // The session cookie will be invalid on the next protected request.
     });
 
     // --- MAIN APPLICATION LOGIC ---
@@ -288,7 +291,6 @@
         trainListDiv.addEventListener('click', handleTrainListClick);
         bookingsListDiv.addEventListener('click', handleBookingsListClick);
 
-        // Modal button listeners
         document.getElementById('confirm-booking-btn').addEventListener('click', handleConfirmBooking);
         document.getElementById('cancel-booking-modal-btn').addEventListener('click', closeBookingModal);
         document.getElementById('confirm-cancellation-btn').addEventListener('click', handleConfirmCancellation);
@@ -298,13 +300,16 @@
     async function loadUserBookings() {
         if (!currentUser) return;
         try {
-            const response = await fetch(`/api/bookings/${currentUser.id}`);
-            if (!response.ok) throw new Error('Failed to fetch bookings.');
-
+            // Include credentials to ensure the session cookie is sent
+            const response = await fetch(`/api/bookings/${currentUser.id}`, { credentials: 'include' });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || 'Failed to fetch bookings.');
+            }
             const bookings = await response.json();
             renderBookings(bookings);
         } catch (error) {
-            showMessage(error.message);
+            showMessage(`Error loading bookings: ${error.message}`);
         }
     }
 
@@ -316,13 +321,19 @@
         }
 
         try {
-            const response = await fetch(`/api/trains/search?from=${from}&to=${to}`);
-            if (!response.ok) throw new Error('Failed to search for trains.');
+            // Include credentials to ensure the session cookie is sent
+            const response = await fetch(`/api/trains/search?from=${from}&to=${to}`, { credentials: 'include' });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || `Server responded with status: ${response.status}`);
+            }
 
             const trains = await response.json();
             renderTrains(trains);
         } catch (error) {
-            showMessage(error.message);
+            showMessage(`Search Failed: ${error.message}`);
+            console.error('Search error:', error);
         }
     }
 
@@ -366,7 +377,8 @@
             const response = await fetch('/api/bookings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                credentials: 'include' // Include credentials for protected endpoint
             });
 
             if (!response.ok) {
@@ -376,8 +388,8 @@
 
             showMessage('Booking successful!');
             closeBookingModal();
-            loadUserBookings(); // Refresh bookings
-            handleSearchTrains(); // Refresh train list for updated seat count
+            loadUserBookings();
+            handleSearchTrains();
         } catch (error) {
             showMessage(`Booking failed: ${error.message}`);
         }
@@ -388,7 +400,8 @@
 
         try {
             const response = await fetch(`/api/bookings/${bookingToCancelId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include' // Include credentials for protected endpoint
             });
             if (!response.ok) {
                 const errorMsg = await response.text();

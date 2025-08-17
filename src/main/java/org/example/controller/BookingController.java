@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import org.example.dto.BookingDTO;
 import org.example.model.Booking;
 import org.example.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class BookingController {
     private BookingService bookingService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<List<Booking>> getBookingsForUser(@PathVariable Long userId) {
+    public ResponseEntity<List<BookingDTO>> getBookingsForUser(@PathVariable Long userId) {
         return ResponseEntity.ok(bookingService.getUserBookings(userId));
     }
 
@@ -30,7 +31,8 @@ public class BookingController {
             int passengerAge = Integer.parseInt(payload.get("passengerAge").toString());
 
             Booking newBooking = bookingService.createBooking(userId, trainId, passengerName, passengerAge);
-            return ResponseEntity.ok(newBooking);
+            // Convert to DTO before sending the response
+            return ResponseEntity.ok(new BookingDTO(newBooking));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

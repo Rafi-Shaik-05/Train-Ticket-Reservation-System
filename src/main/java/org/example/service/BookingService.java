@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.dto.BookingDTO;
 import org.example.model.Booking;
 import org.example.model.Train;
 import org.example.model.User;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -25,8 +27,13 @@ public class BookingService {
     @Autowired
     private UserRepository userRepository;
 
-    public List<Booking> getUserBookings(Long userId) {
-        return bookingRepository.findByUserId(userId);
+    @Transactional(readOnly = true)
+    public List<BookingDTO> getUserBookings(Long userId) {
+        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        // Convert the list of Booking entities to a list of BookingDTOs
+        return bookings.stream()
+                .map(BookingDTO::new)
+                .collect(Collectors.toList());
     }
 
     @Transactional

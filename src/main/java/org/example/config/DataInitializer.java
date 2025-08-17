@@ -2,6 +2,8 @@ package org.example.config;
 
 import org.example.model.Train;
 import org.example.repository.TrainRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,16 +13,16 @@ import java.util.List;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
     @Autowired
     private TrainRepository trainRepository;
 
     @Override
     public void run(String... args) throws Exception {
-        // Check if there is any train data already
         if (trainRepository.count() == 0) {
-            System.out.println("No train data found. Initializing sample data...");
+            logger.info("No train data found. Initializing sample data...");
 
-            // Create and save sample train data
             Train train1 = new Train();
             train1.setTrainNumber("T123");
             train1.setName("Rajdhani Express");
@@ -54,7 +56,9 @@ public class DataInitializer implements CommandLineRunner {
             train4.setAvailableSeats(90);
 
             trainRepository.saveAll(List.of(train1, train2, train3, train4));
-            System.out.println("Sample train data initialized.");
+            logger.info("Sample train data initialized successfully. Total trains: {}", trainRepository.count());
+        } else {
+            logger.info("Train data already exists. Skipping initialization. Total trains: {}", trainRepository.count());
         }
     }
 }
